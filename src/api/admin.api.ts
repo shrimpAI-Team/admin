@@ -46,9 +46,41 @@ export interface SystemHealth {
   };
 }
 
+export interface TimeSeriesPoint {
+  date: string;
+  label: string;
+  newUsers: number;
+  activeSessions: number;
+  chatMessages: number;
+  visionScans: number;
+}
+
+export interface SpeciesShare {
+  name: string;
+  scientificName: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+export interface AnalyticsData {
+  timeSeries: TimeSeriesPoint[];
+  speciesDistribution: SpeciesShare[];
+  hourlyActivity: Array<{ hour: string; queries: number }>;
+  radarMetrics: Array<{ subject: string; score: number; fullMark: number }>;
+  summary: {
+    weeklyGrowthRate: number;
+    avgDailyActiveUsers: number;
+    peakHour: string;
+    dominantSpecies: string;
+    successRate: number;
+  };
+}
+
 export interface OverviewData {
   kpis: OverviewKpis;
   health: SystemHealth;
+  analytics?: AnalyticsData;
   recentUsers: Array<{
     id: string;
     email: string;

@@ -5,6 +5,12 @@ import { apiError } from "../lib/api";
 import { Alert } from "../components/ui/Alert";
 import { RoleBadge, StatusBadge } from "../components/ui/Badge";
 import { useI18nStore } from "../store/i18n.store";
+import { AnalyticsSummaryCards } from "../components/analytics/AnalyticsSummaryCards";
+import { AreaTrendChart } from "../components/analytics/AreaTrendChart";
+import { DonutSpeciesChart } from "../components/analytics/DonutSpeciesChart";
+import { BarActivityChart } from "../components/analytics/BarActivityChart";
+import { RadarScoreChart } from "../components/analytics/RadarScoreChart";
+import { HourlyActivityChart } from "../components/analytics/HourlyActivityChart";
 
 export function OverviewPage() {
   const { t } = useI18nStore();
@@ -12,6 +18,7 @@ export function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [timeRange, setTimeRange] = useState<"7d" | "14d" | "30d">("14d");
 
   const loadData = async () => {
     setLoading(true);
@@ -142,6 +149,51 @@ export function OverviewPage() {
             <strong style={{ color: "#3b82f6" }}>{data?.kpis.totalChatMessages ?? 0}</strong> {t("chatMessages")}
           </div>
         </div>
+      </div>
+
+      {/* ════════════ ANALYTICS SUMMARY CARDS (SPARKLINES) ════════════ */}
+      <AnalyticsSummaryCards summary={data?.analytics?.summary} />
+
+      {/* ════════════ ANALYTICS & CHARTS SECTION ════════════ */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        {/* Row 1: Area Trend Chart (Left 62%) + Donut Species Chart (Right 38%) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
+          {data?.analytics?.timeSeries && (
+            <div style={{ flex: 1.6, minWidth: "320px" }}>
+              <AreaTrendChart
+                data={data.analytics.timeSeries}
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+              />
+            </div>
+          )}
+
+          {data?.analytics?.speciesDistribution && (
+            <div style={{ flex: 1, minWidth: "320px" }}>
+              <DonutSpeciesChart data={data.analytics.speciesDistribution} />
+            </div>
+          )}
+        </div>
+
+        {/* Row 2: Bar Activity Chart (Left) + Radar Score Chart (Right) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
+          {data?.analytics?.timeSeries && (
+            <div style={{ flex: 1 }}>
+              <BarActivityChart data={data.analytics.timeSeries} />
+            </div>
+          )}
+
+          {data?.analytics?.radarMetrics && (
+            <div style={{ flex: 1 }}>
+              <RadarScoreChart metrics={data.analytics.radarMetrics} />
+            </div>
+          )}
+        </div>
+
+        {/* Row 3: 24-Hour Farming Telemetry Histogram */}
+        {data?.analytics?.hourlyActivity && (
+          <HourlyActivityChart data={data.analytics.hourlyActivity} />
+        )}
       </div>
 
       {/* ════════════ SERVICE HEALTH TELEMETRY ════════════ */}
