@@ -55,16 +55,40 @@ function AdminProtectedRoute() {
 }
 
 export function App() {
-  const { bootstrap, logout } = useAdminAuthStore();
+  const { bootstrap, logout, status } = useAdminAuthStore();
   const initTheme = useThemeStore((s) => s.initTheme);
 
   useEffect(() => {
     initTheme();
-    setSessionLostHandler(() => {
-      logout();
+    setSessionLostHandler((reason) => {
+      void logout(reason);
     });
     void bootstrap();
   }, [bootstrap, logout, initTheme]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    const checkSession = () => {
+      void bootstrap().catch(() => {});
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkSession();
+      }
+    };
+
+    const timer = setInterval(checkSession, 10_000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", checkSession);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("focus", checkSession);
+    };
+  }, [status, bootstrap]);
 
   return (
     <BrowserRouter>

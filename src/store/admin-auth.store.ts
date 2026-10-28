@@ -6,15 +6,20 @@ interface AdminAuthState {
   user: CurrentAdminUser | null;
   status: "loading" | "authenticated" | "unauthenticated";
   isNonAdmin: boolean;
+  notice: string | null;
   bootstrap: () => Promise<void>;
   login: (email: string, pass: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (reason?: string) => Promise<void>;
+  setNotice: (n: string | null) => void;
 }
 
 export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
   user: null,
   status: "loading",
   isNonAdmin: false,
+  notice: null,
+
+  setNotice: (notice) => set({ notice }),
 
   bootstrap: async () => {
     try {
@@ -27,13 +32,18 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
       } else {
         set({ user: null, status: "unauthenticated", isNonAdmin: false });
       }
-    } catch {
-      set({ user: null, status: "unauthenticated", isNonAdmin: false });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      const notice =
+        msg === "SESSION_REVOKED"
+          ? "Tài khoản quản trị vừa đăng nhập trên thiết bị khác"
+          : null;
+      set({ user: null, status: "unauthenticated", isNonAdmin: false, notice });
     }
   },
 
   login: async (email: string, pass: string) => {
-    set({ status: "loading" });
+    set({ status: "loading", notice: null });
     try {
       const res = await adminApi.login({ email, password: pass });
       if (res.accessToken) {
@@ -46,11 +56,16 @@ export const useAdminAuthStore = create<AdminAuthState>((set, get) => ({
     }
   },
 
-  logout: async () => {
+  logout: async (reason?: string) => {
     try {
       await adminApi.logout();
     } catch {}
     setAccessToken(null);
-    set({ user: null, status: "unauthenticated", isNonAdmin: false });
+    set({
+      user: null,
+      status: "unauthenticated",
+      isNonAdmin: false,
+      notice: reason ?? null,
+    });
   },
 }));

@@ -9,6 +9,8 @@ import { Alert } from "../components/ui/Alert";
 export function AdminLoginPage() {
   const navigate = useNavigate();
   const login = useAdminAuthStore((s) => s.login);
+  const notice = useAdminAuthStore((s) => s.notice);
+  const setNotice = useAdminAuthStore((s) => s.setNotice);
   const { theme, toggleTheme } = useThemeStore();
   const { lang, toggleLang, t } = useI18nStore();
 
@@ -152,6 +154,11 @@ export function AdminLoginPage() {
           </div>
         </div>
 
+        {notice && (
+          <Alert variant="warning" onClose={() => setNotice(null)}>
+            {notice}
+          </Alert>
+        )}
         {error && <Alert variant="error" onClose={() => setError("")}>{error}</Alert>}
 
         {/* Login Form */}
